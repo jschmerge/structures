@@ -333,6 +333,18 @@ class avl_tree
 		return inserted;
 	}
 
+	void erase_subtree(node_type * subtree)
+	{
+		while (subtree != nullptr)
+		{
+			erase_subtree(subtree->right);
+			node_type * left_subtree = subtree->left;
+			destroy_node(subtree);
+			--node_count;
+			subtree = left_subtree;
+		}
+	}
+
 	node_type * insert_value(node_type * parent, node_type ** child_link,
 	                         const value_type & value)
 	{
@@ -1717,32 +1729,11 @@ void avl_tree<T, Comp, Alloc>::destroy_tree() noexcept
 {
 	node_type * p = sentinel.left;
 	sentinel.left = nullptr;
+	maximum->right = nullptr;
+	minimum->left = nullptr;
 	maximum = minimum = &sentinel;
 
-	if (p != &sentinel)
-	{
-		if (p != nullptr) p->set_parent(nullptr);
-
-		while (p != nullptr)
-		{
-			if (p->left != nullptr)
-			{
-				p = p->left;
-				p->parent_node()->left = nullptr;
-			} else if (p->right != nullptr)
-			{
-				p = p->right;
-				p->parent_node()->right = nullptr;
-			} else
-			{
-				node_type * tmp = p;
-				p = p->parent_node();
-				destroy_node(tmp);
-				--node_count;
-			}
-		}
-	}
-
+	erase_subtree(p);
 	assert(node_count == 0);
 }
 
